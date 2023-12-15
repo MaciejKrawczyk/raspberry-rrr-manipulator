@@ -2,6 +2,7 @@
   <div>
     <button @mousedown="handleStart('minus')" @mouseup="handleEnd('minus')" @touchstart="handleStart('minus')" @touchend="handleEnd('minus')">-</button>
     <button @mousedown="handleStart('plus')" @mouseup="handleEnd('plus')" @touchstart="handleStart('plus')" @touchend="handleEnd('plus')">+</button>
+    <div>Current Angle: {{ currentAngle }}</div>
   </div>
 </template>
 
@@ -10,11 +11,25 @@ import io from 'socket.io-client';
 
 export default {
   name: 'MyComponent',
+  data() {
+    return {
+      currentAngle: 0,
+    };
+  },
   mounted() {
-    this.socket = io('192.168.1.28:5000');
+    this.socket = io('http://192.168.1.28:5000');
+
+    this.socket.on('connect', () => {
+      // console.log('Connected to the server.');
+    });
 
     this.socket.on('response', (data) => {
-      console.log(data);
+      // console.log('Response from server:', data);
+    });
+
+    this.socket.on('angle_update', (data) => {
+      // console.log('Angle update received:', data);
+      this.currentAngle = data.angle;
     });
   },
   methods: {
