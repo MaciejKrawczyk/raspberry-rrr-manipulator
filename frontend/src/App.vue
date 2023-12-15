@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <div class="border border-white p-10">
+    <p>α</p>
     <button @mousedown="handleStart('minus')" @mouseup="handleEnd('minus')" @touchstart="handleStart('minus')" @touchend="handleEnd('minus')">-</button>
     <button @mousedown="handleStart('plus')" @mouseup="handleEnd('plus')" @touchstart="handleStart('plus')" @touchend="handleEnd('plus')">+</button>
     <div>Current Angle: {{ currentAngle }}</div>
