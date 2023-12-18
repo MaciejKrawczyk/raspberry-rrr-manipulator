@@ -5,22 +5,30 @@ from models.Command import Command
 from models.Position import Position
 from models.Program import Program
 from models.Registry import Registry
-from controllers import registry, command  # Import the controller
-from controllers import program  # Import the controller
 
-app = Flask(__name__)
-app.config.from_object('config')
-CORS(app)
 
-db.init_app(app)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('config')
+    CORS(app)
 
-with app.app_context():
-    db.create_all()
+    db.init_app(app)
 
-# Register the controller's routes
-app.register_blueprint(registry.bp)
-app.register_blueprint(program.bp)
-app.register_blueprint(command.bp)
+    with app.app_context():
+        db.create_all()
+
+    return app
+
 
 if __name__ == '__main__':
+    app = create_app()
+
+    # Import the controllers here to avoid circular imports
+    from controllers import registry, command, program
+
+    # Register the controller's routes
+    app.register_blueprint(registry.bp)
+    app.register_blueprint(program.bp)
+    app.register_blueprint(command.bp)
+
     app.run(debug=True)
