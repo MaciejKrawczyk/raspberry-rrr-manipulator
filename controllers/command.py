@@ -6,7 +6,9 @@ bp = Blueprint('command', __name__)
 
 
 def create_command(program_id, command_type):
-    new_command = Command(program_id=program_id, type=command_type, next_command_id=None)
+    new_command = Command(program_id=program_id, type=command_type,
+                          # next_command_id=None
+                          )
     db.session.add(new_command)
     db.session.commit()
     db.session.flush()
@@ -28,7 +30,7 @@ def command():
         command_type = request.json.get('command_type')
 
         new_command = create_command(program_id, command_type)
-        update_last_command(program_id, new_command.id)
+        # update_last_command(program_id, new_command.id)
 
         return jsonify({'message': 'Command created successfully', 'command_id': new_command.id}), 201
 
@@ -42,5 +44,15 @@ def command():
             return jsonify({'message': 'program_id parameter is missing'}), 400
 
     elif request.method == 'DELETE':
-        # Implement your DELETE logic here
-        return jsonify({'message': 'DELETE request received'}), 200
+        command_id = request.args.get('command_id')
+        print(command_id)
+        if command_id is not None:
+            command = Command.query.get(command_id)
+            if command:
+                db.session.delete(command)
+                db.session.commit()
+                return jsonify({'message': 'Command deleted successfully'}), 200
+            else:
+                return jsonify({'message': 'Command not found'}), 404
+        else:
+            return jsonify({'message': 'command_id parameter is missing'}), 400
