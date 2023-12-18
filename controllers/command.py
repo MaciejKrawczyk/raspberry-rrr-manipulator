@@ -33,8 +33,13 @@ def command():
         return jsonify({'message': 'Command created successfully', 'command_id': new_command.id}), 201
 
     elif request.method == 'GET':
-        # Implement your GET logic here
-        return jsonify({'message': 'GET request received'}), 200
+        program_id = request.args.get('program_id')
+        if program_id is not None:
+            commands = Command.query.filter_by(program_id=program_id).all()
+            commands_list = [command.to_dict() for command in commands]
+            return jsonify(commands_list), 200
+        else:
+            return jsonify({'message': 'program_id parameter is missing'}), 400
 
     elif request.method == 'DELETE':
         # Implement your DELETE logic here

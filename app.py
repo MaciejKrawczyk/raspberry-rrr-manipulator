@@ -2,7 +2,6 @@ from flask import Flask
 from flask_cors import CORS
 from models import db
 from models.Command import Command
-from models.ProgramCommand import ProgramCommand
 from models.Position import Position
 from models.Program import Program
 from models.Registry import Registry
