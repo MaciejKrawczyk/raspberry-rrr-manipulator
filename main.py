@@ -77,6 +77,7 @@ import asyncio
 from RRRManipulator import Motor, RRRManipulator
 
 
+
 async def mainik():
     motor = Motor(range_max=360, range_min=0)
     await motor.rotate(90)

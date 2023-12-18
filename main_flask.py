@@ -3,9 +3,17 @@ from flask_socketio import SocketIO, emit
 import RPi.GPIO as GPIO
 import time
 import threading
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+
 
 # Encoder pins and other initializations
 ENCA = 17  # GPIO pin 17
@@ -20,9 +28,11 @@ GPIO.setup(ENCB, GPIO.IN)
 GPIO.setup(24, GPIO.OUT)
 GPIO.setup(23, GPIO.OUT)
 
+
 # Function to power pin
 def power_pin(pin, state):
     GPIO.output(pin, GPIO.HIGH if state else GPIO.LOW)
+
 
 @socketio.on('message')
 def handle_message(data):
@@ -42,10 +52,12 @@ def handle_message(data):
     else:
         emit('response', {'data': 'Message received!'})
 
+
 def readEncoder(channel):
     global posi
     b = GPIO.input(ENCB)
     posi += 1 if b > 0 else -1
+
 
 def loop():
     global posi
@@ -56,6 +68,7 @@ def loop():
         # print("Angle:", angle)
         socketio.emit('angle_update', {'angle': angle})
         time.sleep(0.05)
+
 
 if __name__ == "__main__":
     GPIO.add_event_detect(ENCA, GPIO.RISING, callback=readEncoder)
