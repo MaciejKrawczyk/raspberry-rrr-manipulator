@@ -1,6 +1,8 @@
 import queue
 from threading import Thread, Event
 
+PULSES_PER_REVOLUTION = 1200
+
 
 class Encoder:
     def __init__(self, input_pin):
@@ -17,18 +19,21 @@ class Motor:
         self.encoder = encoder
         self._angle = 0
         self._speed = 0
-        # speed is based on PWM
 
     def calculate_angle(self):
-        # calculate the angle based on encoder pulses
-        pass
+        # Example calculation, modify as per the actual mechanism
+        self._angle = self.encoder.get_pulses() * 360 / PULSES_PER_REVOLUTION
 
     def get_angle(self):
         self.calculate_angle()
         return self._angle
 
     def set_angle(self, angle):
-        pass
+        # Assuming angle is directly proportional to pulses
+        required_pulses = angle * PULSES_PER_REVOLUTION / 360
+        current_pulses = self.get_angle() * PULSES_PER_REVOLUTION / 360
+        # Adjusting the pulses based on the desired angle
+        self.encoder._pulses = int(current_pulses + (required_pulses - current_pulses))
 
     def set_speed(self, speed):
         self._speed = speed
@@ -47,8 +52,48 @@ class Robot:
         self.l2 = l2
         self.l3 = l3
 
+    def run(self, processed_command):
+        type = processed_command[0]
+        body = processed_command[1]
+        if type == 'move_to_point':
+            self.move_to_point(body['x'], body['y'], body['z'])
+        elif type == 'move_to_angle':
+            self.move_to_angle(body['alfa'], body['beta'], body['gamma'])
+        elif type == 'sleep':
+            self.sleep()
+        elif type == 'run_program':
+            self.run_program(body)
+        elif type == 'set_speed':
+            self.set_speed(body['speed'])
+            print(self.speed)
+            return self.speed
+        elif type == 'move_alfa':
+            self.move_alfa(body['alfa'])
+            print(self.motor_alfa.get_angle())
+            return self.motor_alfa.get_angle()
+        elif type == 'move_beta':
+            self.move_beta(body['beta'])
+            print(self.motor_beta.get_angle())
+            return self.motor_beta.get_angle()
+        elif type == 'move_gamma':
+            self.move_gamma(body['gamma'])
+            print(self.motor_gamma.get_angle())
+            return self.motor_gamma.get_angle()
+        elif type == 'move_x':
+            self.move_x(body['x'])
+            print(self.get_x())
+            return self.get_x()
+        elif type == 'move_y':
+            self.move_y(body['y'])
+            print(self.get_y())
+            return self.get_y()
+        elif type == 'move_z':
+            self.move_z(body['z'])
+            print(self.get_z())
+            return self.get_z()
+
     def set_speed(self, speed):
-        self.speed = speed
+        self.speed += speed
         self.motor_alfa.set_speed(self.speed)
         self.motor_beta.set_speed(self.speed)
         self.motor_gamma.set_speed(self.speed)
@@ -56,13 +101,16 @@ class Robot:
     # def move_end_effector(self, x, y, z):
 
     def move_to_point(self, x, y, z):
-        pass
+        print("moved to point")
+        return "ok"
 
     def move_to_angle(self, alfa, beta, gamma):
-        pass
+        print("moved to angle")
+        return "ok"
 
     def sleep(self, time=1):
-        pass
+        print("sleeping")
+        return "sleeping"
 
     def get_x(self):
         return self._x
@@ -81,6 +129,38 @@ class Robot:
 
     def get_gamma(self):
         return self.motor_gamma.get_angle()
+
+    def move_alfa(self, value):
+        self.motor_alfa.set_angle(self.motor_alfa.get_angle() + value)
+
+    def move_beta(self, value):
+        self.motor_beta.set_angle(self.motor_beta.get_angle() + value)
+
+    def move_gamma(self, value):
+        self.motor_gamma.set_angle(self.motor_gamma.get_angle() + value)
+
+    def move_y(self, value):
+        pass
+
+    def move_x(self, value):
+        pass
+
+    def move_z(self, value):
+        pass
+
+    def run_program(self, value):
+        pass
+
+
+class RobotCommandProcessor:
+    def __init__(self):
+        pass
+
+    def get_processed_command(self, command):
+        type = command['type']
+        body = command['body']
+        processed_command = [type, body]
+        return processed_command
 
 
 class Program:
@@ -123,10 +203,11 @@ def init_robot():
     return robot
 
 
-class Worker:
-    def __init__(self):
+class RobotSystemWorker:
+    def __init__(self, robot_command_processor: RobotCommandProcessor):
 
         self.robot: Robot = init_robot()
+        self.robot_command_processor = robot_command_processor
 
         self.command_queue = queue.Queue()
         self.feedback_queue = queue.Queue()
@@ -142,7 +223,15 @@ class Worker:
         while not self.stop_event.is_set():
             try:
                 command = self.command_queue.get(timeout=1)
-                feedback = f"Processed: {command}"
+                # print(command)
+
+                # ---- processing command
+
+                processed_command = self.robot_command_processor.get_processed_command(command)
+                feedback = self.robot.run(processed_command)
+
+                # ----
+
                 self.feedback_queue.put(feedback)
             except queue.Empty:
                 continue
