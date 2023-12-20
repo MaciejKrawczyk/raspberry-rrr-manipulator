@@ -1,43 +1,62 @@
-from flask import Flask, request
-import threading
+from flask import Flask
+from flask_socketio import SocketIO
+from flask_cors import CORS
+from threading import Thread, Event
 import queue
+import time
 
 app = Flask(__name__)
-data_queue = queue.Queue()
+app.config['SECRET_KEY'] = 'secret!'
+cors = CORS(app)  # Enable CORS for all routes
+socketio = SocketIO(app, cors_allowed_origins="*")  # Allow CORS for SocketIO
 
-# Predefined variables
-variables = {
-    'var1': 'initial value 1',
-    'var2': 'initial value 2',
-    # Add more predefined variables here if needed
-}
+# Queues for command and feedback
+command_queue = queue.Queue()
+feedback_queue = queue.Queue()
 
-
-def variable_manager():
-    global variables
-    while True:
-        # Update variables based on data from the API thread
-        if not data_queue.empty():
-            var_update = data_queue.get()
-            variables.update(var_update)
-            # Potentially send updates back to the API thread
+# Event to control the worker thread
+stop_event = Event()
 
 
-def api_thread():
-    app.run()
+# Worker Thread Function
+def worker():
+    while not stop_event.is_set():
+        try:
+            command = command_queue.get(timeout=1)  # Timeout to check for stop_event
+            if command == "STOP":
+                feedback_queue.put("Worker is stopped")
+                stop_event.set()
+                time.sleep(2)  # Wait for 2 seconds
+                restart_worker()  # Restart worker
+                feedback_queue.put("Worker is restarted")
+                break
+            # Process command...
+            feedback = "Processed: " + command
+            feedback_queue.put(feedback)
+        except queue.Empty:
+            continue
 
 
-@app.route('/update_variable', methods=['POST'])
-def update_variable():
-    var_name = request.form['name']
-    var_value = request.form['value']
-    data_queue.put({var_name: var_value})
-    return "Variable updated"
+# Function to start or restart worker thread
+def restart_worker():
+    global worker_thread
+    stop_event.clear()
+    worker_thread = Thread(target=worker, daemon=True)
+    worker_thread.start()
+
+
+# Start Worker Thread
+worker_thread = Thread(target=worker, daemon=True)
+worker_thread.start()
+
+
+# SocketIO Events
+@socketio.on('send_command')
+def handle_command(command):
+    command_queue.put(command)
+    feedback = feedback_queue.get()
+    socketio.emit('feedback', feedback)
 
 
 if __name__ == '__main__':
-    variable_thread = threading.Thread(target=variable_manager)
-    api_thread = threading.Thread(target=api_thread)
-
-    variable_thread.start()
-    api_thread.start()
+    socketio.run(app, debug=True)
