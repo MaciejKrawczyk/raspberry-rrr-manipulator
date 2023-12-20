@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Command Center</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+    var socket = io.connect(location.protocol + '//' + document.domain + ':5000');
+
+    socket.on('connect', function() {
+        console.log('Connected');
+    });
+
+    socket.on('feedback', function(msg) {
+        console.log('Feedback: ' + msg);
+    });
+
+    document.getElementById('send_button').addEventListener('click', function() {
+        var command = document.getElementById('command_input').value;
+        send_command('run_program', { 'program_name': command });
+    });
+
+    // Function to send motor control commands
+    function sendMotorCommand(motor, change) {
+        var commandType = 'move_' + motor;
+        var commandBody = {};
+        commandBody[motor] = change;
+        send_command(commandType, commandBody);
+    }
+
+    // Function to send speed control commands
+    function sendSpeedCommand(change) {
+        send_command('set_speed', { 'speed': change });
+    }
+
+    // Function to emit the send_command event
+    function send_command(commandType, commandBody) {
+        var command = {
+            'type': commandType,
+            'body': commandBody
+        };
+        socket.emit('send_command', command);
+    }
+
+    // Add event listeners for all the new buttons
+    document.querySelectorAll('.motor-control').forEach(button => {
+        button.addEventListener('click', function() {
+            sendMotorCommand(this.dataset.motor, parseInt(this.dataset.change));
+        });
+    });
+
+    document.querySelectorAll('.speed-control').forEach(button => {
+        button.addEventListener('click', function() {
+            sendSpeedCommand(parseInt(this.dataset.change));
+        });
+    });
+
+    document.getElementById('move_to_point_button').addEventListener('click', function() {
+        var x = document.getElementById('x_coord').value;
+        var y = document.getElementById('y_coord').value;
+        var z = document.getElementById('z_coord').value;
+        send_command('move_to_point', { 'x': x, 'y': y, 'z': z });
+    });
+
+    document.getElementById('move_to_angle_button').addEventListener('click', function() {
+        var alfa = document.getElementById('alfa_angle').value;
+        var beta = document.getElementById('beta_angle').value;
+        var gamma = document.getElementById('gamma_angle').value;
+        send_command('move_to_angle', { 'alfa': alfa, 'beta': beta, 'gamma': gamma });
+    });
+
+    document.querySelectorAll('.simple-command').forEach(button => {
+        button.addEventListener('click', function() {
+            var commandType = this.dataset.command;
+            send_command(commandType, {});
+        });
+    });
+});
+
+    </script>
+</head>
+<body>
+    <input type="text" id="command_input" placeholder="Enter command">
+    <button id="send_button">Send Command</button>
+    <br>
+
+    <!-- Speed control buttons -->
+    <button class="speed-control" data-change="10">Speed +</button>
+    <button class="speed-control" data-change="-10">Speed -</button>
+    <br>
+
+    <!-- Motor A control buttons -->
+    <button class="motor-control" data-motor="alfa" data-change="1">Motor A +</button>
+    <button class="motor-control" data-motor="alfa" data-change="-1">Motor A -</button>
+    <br>
+
+    <!-- Motor B control buttons -->
+    <button class="motor-control" data-motor="beta" data-change="1">Motor B +</button>
+    <button class="motor-control" data-motor="beta" data-change="-1">Motor B -</button>
+    <br>
+
+    <!-- Motor C control buttons -->
+    <button class="motor-control" data-motor="gamma" data-change="1">Motor C +</button>
+    <button class="motor-control" data-motor="gamma" data-change="-1">Motor C -</button>
+
+    <!-- Additional UI Elements -->
+<div>
+    <!-- Move to Point Control -->
+    <input type="number" id="x_coord" placeholder="X Coordinate">
+    <input type="number" id="y_coord" placeholder="Y Coordinate">
+    <input type="number" id="z_coord" placeholder="Z Coordinate">
+    <button id="move_to_point_button">Move to Point</button>
+</div>
+
+<div>
+    <!-- Move to Angle Control -->
+    <input type="number" id="alfa_angle" placeholder="Alfa Angle">
+    <input type="number" id="beta_angle" placeholder="Beta Angle">
+    <input type="number" id="gamma_angle" placeholder="Gamma Angle">
+    <button id="move_to_angle_button">Move to Angle</button>
+</div>
+
+<div>
+    <!-- Simple Command Buttons -->
+    <button class="simple-command" data-command="sleep">Sleep</button>
+</div>
+</body>
+</html>
