@@ -65,31 +65,31 @@ class Robot:
             self.run_program(body)
         elif type == 'set_speed':
             self.set_speed(body['speed'])
-            print(self.speed)
+            # print(self.speed)
             return self.speed
         elif type == 'move_alfa':
             self.move_alfa(body['alfa'])
-            print(self.motor_alfa.get_angle())
+            # print(self.motor_alfa.get_angle())
             return self.motor_alfa.get_angle()
         elif type == 'move_beta':
             self.move_beta(body['beta'])
-            print(self.motor_beta.get_angle())
+            # print(self.motor_beta.get_angle())
             return self.motor_beta.get_angle()
         elif type == 'move_gamma':
             self.move_gamma(body['gamma'])
-            print(self.motor_gamma.get_angle())
+            # print(self.motor_gamma.get_angle())
             return self.motor_gamma.get_angle()
         elif type == 'move_x':
             self.move_x(body['x'])
-            print(self.get_x())
+            # print(self.get_x())
             return self.get_x()
         elif type == 'move_y':
             self.move_y(body['y'])
-            print(self.get_y())
+            # print(self.get_y())
             return self.get_y()
         elif type == 'move_z':
             self.move_z(body['z'])
-            print(self.get_z())
+            # print(self.get_z())
             return self.get_z()
 
     def set_speed(self, speed):
