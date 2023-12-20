@@ -9,6 +9,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret')
 cors = CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+
 worker = Worker()
 worker.start()
 
