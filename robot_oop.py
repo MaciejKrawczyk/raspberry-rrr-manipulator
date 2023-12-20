@@ -1,7 +1,6 @@
-# ---------------------
 class Encoder:
-    def __init__(self, pin):
-        self.pin = pin
+    def __init__(self, input_pin):
+        self.input_pin = input_pin
         self._pulses: int = 0
 
     def get_pulses(self):
@@ -9,9 +8,8 @@ class Encoder:
 
 
 class Motor:
-    def __init__(self, in_pin, out_pin, encoder: Encoder):
-        self.in_pin = in_pin
-        self.out_pin = out_pin
+    def __init__(self, output_pin, encoder: Encoder):
+        self.output_pin = output_pin
         self.encoder = encoder
         self._angle = 0
         self._speed = 0
@@ -51,6 +49,8 @@ class Robot:
         self.motor_beta.set_speed(self.speed)
         self.motor_gamma.set_speed(self.speed)
 
+    # def move_end_effector(self, x, y, z):
+
     def move_to_point(self, x, y, z):
         pass
 
@@ -79,6 +79,11 @@ class Robot:
         return self.motor_gamma.get_angle()
 
 
+class Program:
+    def __init__(self):
+        self.commands = []
+
+
 class RobotController:
     def __init__(self, robot: Robot):
         self.robot = robot
@@ -92,5 +97,33 @@ class RobotController:
     def command_sleep(self):
         self.robot.sleep()
 
+    def run_program(self, program: Program):
+        pass
+
     def set_speed(self, speed: int):
         self.robot.set_speed = speed
+
+
+# ---------------------
+
+
+if __name__ == "__main__":
+    encoder_alfa = Encoder(1)
+    encoder_beta = Encoder(2)
+    encoder_gamma = Encoder(3)
+    motor_alfa = Motor(1, encoder_alfa)
+    motor_beta = Motor(2, encoder_beta)
+    motor_gamma = Motor(3, encoder_gamma)
+    robot = Robot(motor_alfa, motor_beta, motor_gamma, 1, 1, 1)
+    robot_controller = RobotController(robot)
+    robot_controller.set_speed(100)
+    # robot_controller.command_move_to_point(1, 1, 1)
+    # robot_controller.command_move_to_angle(1, 1, 1)
+    # robot_controller.command_sleep()
+    # program = Program()
+    # program.commands = [
+    #     robot_controller.command_move_to_point(1, 1, 1),
+    #     robot_controller.command_move_to_angle(1, 1, 1),
+    #     robot_controller.command_sleep()
+    # ]
+    # robot_controller.run_program(program)
