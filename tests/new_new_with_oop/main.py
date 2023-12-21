@@ -45,7 +45,7 @@ trajectory_angles = []
 
 for point in trajectory_points:
     # cartesian to angles
-    trajectory_angles.append(robot.inverse_kinematics3(point.x, point.y, point.z, True))
+    trajectory_angles.append(robot.inverse_kinematics3(point))
 
 robot.plot_trajectory(trajectory_angles)
 
