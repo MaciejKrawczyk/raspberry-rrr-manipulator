@@ -57,40 +57,50 @@ class Robot:
         body = processed_command[1]
         if type == 'move_to_point':
             self.move_to_point(body['x'], body['y'], body['z'])
+
         elif type == 'move_to_angle':
             self.move_to_angle(body['alfa'], body['beta'], body['gamma'])
+
         elif type == 'sleep':
             self.sleep()
+
         elif type == 'run_program':
             self.run_program(body)
+
         elif type == 'set_speed':
             self.set_speed(body['speed'])
             # print(self.speed)
-            return self.speed
+            return {"speed": self.speed}
+
         elif type == 'move_alfa':
             self.move_alfa(body['alfa'])
             # print(self.motor_alfa.get_angle())
-            return self.motor_alfa.get_angle()
+            return {"alfa": self.motor_alfa.get_angle()}
+
         elif type == 'move_beta':
             self.move_beta(body['beta'])
             # print(self.motor_beta.get_angle())
-            return self.motor_beta.get_angle()
+            return {"beta": self.motor_beta.get_angle()}
+
         elif type == 'move_gamma':
             self.move_gamma(body['gamma'])
             # print(self.motor_gamma.get_angle())
-            return self.motor_gamma.get_angle()
+            return {"gamma": self.motor_gamma.get_angle()}
+
         elif type == 'move_x':
             self.move_x(body['x'])
             # print(self.get_x())
-            return self.get_x()
+            return {"x": self.get_x()}
+
         elif type == 'move_y':
             self.move_y(body['y'])
             # print(self.get_y())
-            return self.get_y()
+            return {"y": self.get_y()}
+
         elif type == 'move_z':
             self.move_z(body['z'])
             # print(self.get_z())
-            return self.get_z()
+            return {"z": self.get_z()}
 
     def set_speed(self, speed):
         self.speed += speed
@@ -172,6 +182,9 @@ class RobotController:
     def __init__(self, robot: Robot):
         self.robot = robot
 
+    def start(self):
+        pass
+
     def command_move_to_point(self, x: float, y: float, z: float):
         self.robot.move_to_point(x, y, z)
 
@@ -217,6 +230,17 @@ class RobotSystemWorker:
     def start(self):
         self.stop_event.clear()
         self.thread.start()
+
+    def send_all_data(self):
+        return {
+            "x": self.robot.get_x(),
+            "y": self.robot.get_y(),
+            "z": self.robot.get_z(),
+            "alfa": self.robot.get_alfa(),
+            "beta": self.robot.get_beta(),
+            "gamma": self.robot.get_gamma(),
+            "speed": self.robot.speed
+        }
 
     def _run(self):
         """ robot loop """

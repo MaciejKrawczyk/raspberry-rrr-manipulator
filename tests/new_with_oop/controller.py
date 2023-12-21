@@ -11,7 +11,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 robot_command_processor = RobotCommandProcessor()
 
-
 worker = RobotSystemWorker(robot_command_processor)
 worker.start()
 
@@ -19,6 +18,11 @@ print("Initializing robot...")
 print("Robot is successfully initialized")
 print("Initializing robot controller...")
 print("Robot controller is successfully initialized")
+
+
+@socketio.on('request_initial_data')
+def handle_request_initial_data(request):
+    socketio.emit('initial_data', worker.send_all_data())
 
 
 @socketio.on('send_command')
