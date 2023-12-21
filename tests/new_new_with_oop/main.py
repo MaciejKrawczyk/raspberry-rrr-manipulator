@@ -39,6 +39,9 @@ parameter_set_to2 = Vector3Cartesian(1, -1, 1)
 
 # trajectory + plot
 
+# https://www.youtube.com/watch?v=nESTZAU8aTk&t=1610s
+
+
 trajectory_points = robot.move3(parameter_set_from, parameter_set_to)
 
 trajectory_angles = []
