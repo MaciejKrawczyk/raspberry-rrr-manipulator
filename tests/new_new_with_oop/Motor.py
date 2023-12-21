@@ -24,7 +24,7 @@ class Motor:
         return self._angle
 
     def set_angle(self, angle):
-        pass
+        self._angle = angle
 
     def run(self):
         pass
