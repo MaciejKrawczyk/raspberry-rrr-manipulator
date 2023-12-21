@@ -3,9 +3,18 @@ import math
 import numpy as np
 
 from tests.new_new_with_oop.Motor import Motor
+from tests.new_new_with_oop.Vectors import Vector3Cartesian, Vector3Configuration
 from utils import convert_to_degrees
 
 import matplotlib.pyplot as plt
+
+ALFA_LIMITS = (0, 360)
+BETA_LIMITS = (-45, 90)
+GAMMA_LIMITS = (-110, 0)
+# in radians
+# ALFA_LIMITS = (0, 2 * math.pi)
+# BETA_LIMITS = (-math.pi / 4, math.pi / 2)
+# GAMMA_LIMITS = (-math.pi * 110 / 180, 0)
 
 
 def interpolate(start, end, steps):
@@ -66,6 +75,7 @@ class Robot:
         a3 = self.l3
         a2 = self.l2
         h1 = self.l1
+        print(alfa,beta,gamma)
 
         c23 = math.cos(beta + gamma)
         s23 = math.sin(beta + gamma)
@@ -80,6 +90,25 @@ class Robot:
 
         return {"x": x, "y": y, "z": z}
 
+    def _check_workspace(self, alfa, beta, gamma):
+        if not (ALFA_LIMITS[0] <= alfa <= ALFA_LIMITS[1]):
+            raise ValueError(f"Alfa angle {alfa} is out of range {ALFA_LIMITS}")
+
+        if not (BETA_LIMITS[0] <= beta <= BETA_LIMITS[1]):
+            raise ValueError(f"Beta angle {beta} is out of range {BETA_LIMITS}")
+
+        if not (GAMMA_LIMITS[0] <= gamma <= GAMMA_LIMITS[1]):
+            raise ValueError(f"Gamma angle {gamma} is out of range {GAMMA_LIMITS}")
+
+        return True
+
+    def check_workspace_angles(self, alfa, beta, gamma):
+        return self._check_workspace(alfa, beta, gamma)
+
+    def check_workspace_point(self, x, y, z):
+        angles = self.inverse_kinematics3(x, y, z)
+        return self._check_workspace(angles['theta1'], angles['theta2'], angles['theta3'])
+
     def forward_kinematics2(self, alfa: float, beta: float, gamma: float):
         L2 = self.l3
         L1 = self.l2
@@ -91,21 +120,10 @@ class Robot:
 
         return {"x": x, "y": y, "z": z}
 
-    def inverse_kinematics_final(self, x, y, z, degrees=False):
-        """ based on outputs uses the correct inverse kinematics function """
-
-        inv1 = self.inverse_kinematics2(x, y, z)
-        if inv1['theta2'] < -math.pi / 2 or inv1['theta2'] > 3 * math.pi / 2:
-            result = self.inverse_kinematics2(x, y, z)
-        else:
-            result = inv1
-
-        return convert_to_degrees(result) if degrees else result
-
     def inverse_kinematics2(self, x, y, z, degrees=False):
         """
         wg filmiku z yt https://www.youtube.com/watch?v=D93iQVoSScQ
-        elbow up
+        elbow up ????
         """
 
         h = self.l1
@@ -127,7 +145,7 @@ class Robot:
 
     def inverse_kinematics3(self, x, y, z, degrees=False):
         """
-        elbow down
+        elbow down???
         wg filmiku z yt https://www.youtube.com/watch?v=Jj5pqbQWKuE CORRECT!!!!!
         """
         h = self.l1
@@ -208,6 +226,45 @@ class Robot:
             trajectory.append(joint_angles)
 
         return trajectory
+
+    def move3(self, parameter_set_from: Vector3Cartesian, parameter_set_to: Vector3Cartesian, point_distance=0.01):
+
+        from_angles = self.inverse_kinematics3(parameter_set_from.x, parameter_set_from.y, parameter_set_from.z)
+        to_angles = self.inverse_kinematics3(parameter_set_to.x, parameter_set_to.y, parameter_set_to.z)
+
+        # if self.check_workspace_angles(from_angles['theta1'], from_angles['theta2'], from_angles['theta3']) and \
+        #         self.check_workspace_angles(to_angles['theta1'], to_angles['theta2'], to_angles['theta3']):
+        #     points are in the workspace, continue...
+
+        # Calculate the number of steps
+        num_steps_alfa = int(abs(to_angles['theta1'] - from_angles['theta1']) / point_distance)
+        num_steps_beta = int(abs(to_angles['theta2'] - from_angles['theta2']) / point_distance)
+        num_steps_gamma = int(abs(to_angles['theta3'] - from_angles['theta3']) / point_distance)
+
+        # Generate a sequence of evenly spaced angles
+        alfa_values = np.linspace(from_angles['theta1'], to_angles['theta1'], num_steps_alfa)
+        beta_values = np.linspace(from_angles['theta2'], to_angles['theta2'], num_steps_beta)
+        gamma_values = np.linspace(from_angles['theta3'], to_angles['theta3'], num_steps_gamma)
+
+        # Create a trajectory list
+        trajectory_configuration_space = []
+
+        # For each step, create a Vector3Configuration object and add it to the trajectory list
+        for alfa, beta, gamma in zip(alfa_values, beta_values, gamma_values):
+            trajectory_configuration_space.append(Vector3Configuration(alfa, beta, gamma))
+
+        # Create a trajectory list for cartesian space
+        trajectory_cartesian_space = []
+
+        # For each configuration in the trajectory
+        for config in trajectory_configuration_space:
+            # Calculate the forward kinematics
+            position = self.forward_kinematics(config.alfa, config.beta, config.gamma)
+
+            # Create a Vector3Cartesian object and add it to the trajectory list
+            trajectory_cartesian_space.append(Vector3Cartesian(position['x'], position['y'], position['z']))
+
+        return trajectory_cartesian_space
 
     def plot_trajectory(self, trajectory):
         theta1_values = [angles['theta1'] for angles in trajectory]
