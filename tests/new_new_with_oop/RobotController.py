@@ -6,22 +6,10 @@ STEP = 0.1
 
 class RobotController:
     def __init__(self, robot: Robot):
-        self.motor_alfa_controller = MotorController(robot.motor_alfa)
-        self.motor_beta_controller = MotorController(robot.motor_beta)
-        self.motor_gamma_controller = MotorController(robot.motor_gamma)
+        self.motor_alfa_controller = MotorController(robot.motor_theta1)
+        self.motor_beta_controller = MotorController(robot.motor_theta2)
+        self.motor_gamma_controller = MotorController(robot.motor_theta3)
 
-    # ----------------------------
-    # responsible for movement
-
-    # parameter_set = {
-    # "x": x,
-    # "y": y,
-    # "z": z,
-    # "alfa": alfa,
-    # "beta": beta,
-    # "gamma": gamma,
-    # "speed": speed
-    # }
     def move(self, parameter_set_from, parameter_set_to):
         """ | calculated by inverse kinematics """
 
