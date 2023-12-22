@@ -30,9 +30,11 @@ GPIO.setup(23, GPIO.OUT)
 pwm_pin_23 = GPIO.PWM(23, 1000)  # 1000 Hz frequency
 pwm_pin_24 = GPIO.PWM(24, 1000)  # 1000 Hz frequency
 
+
 # Function to power pin with PWM duty cycle
 def power_pin_pwm(pin, duty_cycle):
     pin.start(duty_cycle)
+
 
 @socketio.on('message')
 def handle_message(data):
@@ -52,10 +54,12 @@ def handle_message(data):
     else:
         emit('response', {'data': 'Message received!'})
 
+
 def readEncoder(channel):
     global posi
     b = GPIO.input(ENCB)
     posi += 1 if b > 0 else -1
+
 
 def loop():
     global posi
@@ -66,6 +70,7 @@ def loop():
         # print("Angle:", angle)
         socketio.emit('angle_update', {'angle': angle})
         time.sleep(0.05)
+
 
 if __name__ == "__main__":
     GPIO.add_event_detect(ENCA, GPIO.RISING, callback=readEncoder)

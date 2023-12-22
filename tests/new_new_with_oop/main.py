@@ -88,7 +88,7 @@ ax.set_title('3D Trajectory of Robot Movement')
 # Rotate the plot
 elevation_angle = 90  # Adjust as needed
 azimuthal_angle = 0  # Adjust as needed
-ax.view_init(elev=elevation_angle, azim=azimuthal_angle)
+# ax.view_init(elev=elevation_angle, azim=azimuthal_angle)
 
 # Show plot
 plt.show()

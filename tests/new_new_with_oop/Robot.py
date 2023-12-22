@@ -138,15 +138,24 @@ class Robot:
         #         self.check_workspace_angles(to_angles['theta1'], to_angles['theta2'], to_angles['theta3']):
         #     points are in the workspace, continue...
 
-        # Calculate the number of steps
-        num_steps_theta1 = int(abs(to_angles.theta1 - from_angles.theta1) / point_distance)
-        num_steps_theta2 = int(abs(to_angles.theta2 - from_angles.theta2) / point_distance)
-        num_steps_theta3 = int(abs(to_angles.theta3 - from_angles.theta3) / point_distance)
 
-        # Generate a sequence of evenly spaced angles
-        alfa_values = np.linspace(from_angles.theta1, to_angles.theta1, num_steps_theta1)
-        beta_values = np.linspace(from_angles.theta2, to_angles.theta2, num_steps_theta2)
-        gamma_values = np.linspace(from_angles.theta3, to_angles.theta3, num_steps_theta3)
+
+        # x = x1 + t(x2 - x1)
+        # y = y1 + t(y2 - y1)
+        # z = z1 + t(z2 - z1)
+
+        alfa_values = []
+        beta_values = []
+        gamma_values = []
+
+        for t in np.linspace(0, 1, 50):
+            alfa = from_angles.theta1 + t * (to_angles.theta1 - from_angles.theta1)
+            beta = from_angles.theta2 + t * (to_angles.theta2 - from_angles.theta2)
+            gamma = from_angles.theta3 + t * (to_angles.theta3 - from_angles.theta3)
+            point = Vector3Configuration(alfa, beta, gamma)
+            alfa_values.append(point.theta1)
+            beta_values.append(point.theta2)
+            gamma_values.append(point.theta3)
 
         # Create a trajectory list
         trajectory_configuration_space = []
@@ -169,9 +178,9 @@ class Robot:
         return trajectory_cartesian_space
 
     def plot_trajectory(self, trajectory):
-        theta1_values = [angles['theta1'] for angles in trajectory]
-        theta2_values = [angles['theta2'] for angles in trajectory]
-        theta3_values = [angles['theta3'] for angles in trajectory]
+        theta1_values = [angles.theta1 for angles in trajectory]
+        theta2_values = [angles.theta2 for angles in trajectory]
+        theta3_values = [angles.theta3 for angles in trajectory]
         steps = list(range(len(trajectory)))
 
         plt.figure(figsize=(12, 8))
