@@ -42,7 +42,7 @@ parameter_set_to2 = Vector3Cartesian(1, -1, 1)
 # https://www.youtube.com/watch?v=nESTZAU8aTk&t=1610s
 
 
-trajectory_points = robot.move3(parameter_set_from, parameter_set_to)
+trajectory_points, trajectory_velocities = robot.move3(parameter_set_from, parameter_set_to)
 
 trajectory_angles = []
 
@@ -51,6 +51,7 @@ for point in trajectory_points:
     trajectory_angles.append(robot.inverse_kinematics3(point))
 
 robot.plot_trajectory(trajectory_angles)
+robot.plot_trajectory_velocities(trajectory_velocities)
 
 # Convert joint angles to x, y, z coordinates
 # trajectory_xyz = []
@@ -64,10 +65,6 @@ robot.plot_trajectory(trajectory_angles)
 x_values = [point.x for point in trajectory_points]
 y_values = [point.y for point in trajectory_points]
 z_values = [point.z for point in trajectory_points]
-
-print(x_values)
-print(y_values)
-print(z_values)
 
 max_x = max(abs(val) for val in x_values)
 max_y = max(abs(val) for val in y_values)

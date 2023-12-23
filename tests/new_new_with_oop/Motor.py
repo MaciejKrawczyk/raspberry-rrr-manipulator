@@ -31,7 +31,7 @@ class Motor:
 
 
 class MotorEncoderCombo:
-    def __init__(self, output_plus_pin, output_minus_pin, input_plus_pin, input_minus_pin,
+    def __init__(self, input_plus_pin, input_minus_pin, output_plus_pin, output_minus_pin,
                  pulses_per_revolution=PULSES_PER_REVOLUTION):
         self.output_plus_pin = output_plus_pin
         self.output_minus_pin = output_minus_pin

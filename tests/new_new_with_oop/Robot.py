@@ -1,8 +1,9 @@
 import math
 
 import numpy as np
+from sympy import Symbol, lambdify
 
-from tests.new_new_with_oop.Motor import Motor
+from tests.new_new_with_oop.Motor import Motor, MotorEncoderCombo
 from tests.new_new_with_oop.Vectors import Vector3Cartesian, Vector3Configuration
 
 from utils import rad_to_degrees, degrees_to_rad
@@ -15,7 +16,8 @@ THETA3_LIMITS = (degrees_to_rad(-110), degrees_to_rad(0))
 
 
 class Robot:
-    def __init__(self, motor_theta1: Motor, motor_theta2: Motor, motor_theta3: Motor, l1: float, l2: float, l3: float):
+    def __init__(self, motor_theta1: MotorEncoderCombo, motor_theta2: MotorEncoderCombo,
+                 motor_theta3: MotorEncoderCombo, l1: float, l2: float, l3: float):
         self.motor_theta1 = motor_theta1
         self.motor_theta2 = motor_theta2
         self.motor_theta3 = motor_theta3
@@ -130,52 +132,79 @@ class Robot:
         return angles
 
     def move3(self, point_from: Vector3Cartesian, point_to: Vector3Cartesian, point_distance=0.01):
-
         from_angles = self.inverse_kinematics3(point_from)
         to_angles = self.inverse_kinematics3(point_to)
+        print(from_angles)
+        print(to_angles)
 
-        # if self.check_workspace_angles(from_angles['theta1'], from_angles['theta2'], from_angles['theta3']) and \
-        #         self.check_workspace_angles(to_angles['theta1'], to_angles['theta2'], to_angles['theta3']):
-        #     points are in the workspace, continue...
-
-
-
-        # x = x1 + t(x2 - x1)
-        # y = y1 + t(y2 - y1)
-        # z = z1 + t(z2 - z1)
 
         alfa_values = []
         beta_values = []
         gamma_values = []
+        alfa_prime_values = []
+        beta_prime_values = []
+        gamma_prime_values = []
 
+        max_velocity = 0
         for t in np.linspace(0, 1, 50):
-            alfa = from_angles.theta1 + t * (to_angles.theta1 - from_angles.theta1)
-            beta = from_angles.theta2 + t * (to_angles.theta2 - from_angles.theta2)
-            gamma = from_angles.theta3 + t * (to_angles.theta3 - from_angles.theta3)
-            point = Vector3Configuration(alfa, beta, gamma)
-            alfa_values.append(point.theta1)
-            beta_values.append(point.theta2)
-            gamma_values.append(point.theta3)
+            time = Symbol('time')
+            f_alfa = from_angles.theta1 + time * (to_angles.theta1 - from_angles.theta1)
+            f_alfa_prime = f_alfa.diff(time)
+            f_alfa = lambdify(time, f_alfa)
+            f_alfa_prime = lambdify(time, f_alfa_prime)
+            f_beta = from_angles.theta2 + time * (to_angles.theta2 - from_angles.theta2)
+            f_beta_prime = f_beta.diff(time)
+            f_beta = lambdify(time, f_beta)
+            f_beta_prime = lambdify(time, f_beta_prime)
+            f_gamma = from_angles.theta3 + time * (to_angles.theta3 - from_angles.theta3)
+            f_gamma_prime = f_gamma.diff(time)
+            f_gamma = lambdify(time, f_gamma)
+            f_gamma_prime = lambdify(time, f_gamma_prime)
 
-        # Create a trajectory list
+            alfa = f_alfa(t)
+            beta = f_beta(t)
+            gamma = f_gamma(t)
+
+            alfa_prime = abs(f_alfa_prime(t))
+            beta_prime = abs(f_beta_prime(t))
+            gamma_prime = abs(f_gamma_prime(t))
+
+            alfa_values.append(alfa)
+            beta_values.append(beta)
+            gamma_values.append(gamma)
+            alfa_prime_values.append(alfa_prime)
+            beta_prime_values.append(beta_prime)
+            gamma_prime_values.append(gamma_prime)
+
+            # Update max_velocity if the current velocities are higher
+            max_velocity = max(max_velocity, alfa_prime, beta_prime, gamma_prime)
+
+        # Normalize the velocities to be between 0 and 1
+        if max_velocity != 0:
+            alfa_prime_values = [value / max_velocity for value in alfa_prime_values]
+            beta_prime_values = [value / max_velocity for value in beta_prime_values]
+            gamma_prime_values = [value / max_velocity for value in gamma_prime_values]
+
+        # Create trajectory lists
         trajectory_configuration_space = []
+        trajectory_velocities = []
 
-        # For each step, create a Vector3Configuration object and add it to the trajectory list
-        for alfa, beta, gamma in zip(alfa_values, beta_values, gamma_values):
+        # Populate the trajectory lists
+        for alfa, beta, gamma, alfa_prime, beta_prime, gamma_prime in zip(
+                alfa_values, beta_values, gamma_values,
+                alfa_prime_values, beta_prime_values, gamma_prime_values):
             trajectory_configuration_space.append(Vector3Configuration(alfa, beta, gamma))
+            trajectory_velocities.append(Vector3Configuration(alfa_prime, beta_prime, gamma_prime))
 
         # Create a trajectory list for cartesian space
         trajectory_cartesian_space = []
 
-        # For each configuration in the trajectory
+        # For each configuration in the trajectory, calculate the forward kinematics
         for config in trajectory_configuration_space:
-            # Calculate the forward kinematics
             position = self.forward_kinematics(config.theta1, config.theta2, config.theta3)
-
-            # Create a Vector3Cartesian object and add it to the trajectory list
             trajectory_cartesian_space.append(Vector3Cartesian(position.x, position.y, position.z))
 
-        return trajectory_cartesian_space
+        return trajectory_cartesian_space, trajectory_velocities
 
     def plot_trajectory(self, trajectory):
         theta1_values = [angles.theta1 for angles in trajectory]
@@ -201,5 +230,38 @@ class Robot:
         plt.ylabel('Theta3 (rad)')
         plt.xlabel('Step')
 
+        plt.tight_layout()
+        plt.show()
+
+    def plot_trajectory_velocities(self, trajectory_velocities):
+        # Extracting the velocity values for each joint
+        theta1_velocities = [vel.theta1 for vel in trajectory_velocities]
+        theta2_velocities = [vel.theta2 for vel in trajectory_velocities]
+        theta3_velocities = [vel.theta3 for vel in trajectory_velocities]
+        steps = list(range(len(trajectory_velocities)))
+
+        # Setting up the plot
+        plt.figure(figsize=(12, 8))
+
+        # Plotting Theta1 velocities
+        plt.subplot(3, 1, 1)
+        plt.plot(steps, theta1_velocities, 'r-')
+        plt.title('Theta1 Velocity over Time')
+        plt.ylabel('Theta1 Velocity (rad/s)')
+
+        # Plotting Theta2 velocities
+        plt.subplot(3, 1, 2)
+        plt.plot(steps, theta2_velocities, 'g-')
+        plt.title('Theta2 Velocity over Time')
+        plt.ylabel('Theta2 Velocity (rad/s)')
+
+        # Plotting Theta3 velocities
+        plt.subplot(3, 1, 3)
+        plt.plot(steps, theta3_velocities, 'b-')
+        plt.title('Theta3 Velocity over Time')
+        plt.ylabel('Theta3 Velocity (rad/s)')
+        plt.xlabel('Step')
+
+        # Display the plot
         plt.tight_layout()
         plt.show()
