@@ -27,8 +27,8 @@ GPIO.setup(24, GPIO.OUT)
 GPIO.setup(23, GPIO.OUT)
 
 # Initialize PWM for pins 23 and 24
-pwm_pin_23 = GPIO.PWM(23, 1000)  # 1000 Hz frequency
-pwm_pin_24 = GPIO.PWM(24, 1000)  # 1000 Hz frequency
+pwm_pin_23 = GPIO.PWM(23, 100)  # 1000 Hz frequency
+pwm_pin_24 = GPIO.PWM(24, 100)  # 1000 Hz frequency
 
 
 # Function to power pin with PWM duty cycle
