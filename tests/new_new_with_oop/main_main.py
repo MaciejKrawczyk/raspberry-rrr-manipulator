@@ -5,6 +5,7 @@ import RPi.GPIO as GPIO
 import time
 
 from Motor import MotorEncoderCombo
+from MotorController import MotorController
     
 GPIO.setmode(GPIO.BCM)
 
@@ -30,53 +31,83 @@ MOTOR_THETA3_MINUS_OUTPUT_PIN = 0
 # ------------
 
 motor_theta1 = MotorEncoderCombo(MOTOR_THETA1_PLUS_INPUT_PIN, MOTOR_THETA1_MINUS_INPUT_PIN, MOTOR_THETA1_PLUS_OUTPUT_PIN, MOTOR_THETA1_MINUS_OUTPUT_PIN)
+motor_theta1_controller = MotorController(motor_theta1)
 
-while True:
-    try: 
-        # # 20% speed for 3 seconds
-        # PWM_THETA1_PLUS.start(20)
-        motor_theta1.run_motor('plus', 50)
-        print(motor_theta1.get_angle())
-        # time.sleep(3)
+# motor_theta1.run_motor('plus', 100)
 
-        # # 50% speed for 3 seconds
-        # PWM_THETA1_PLUS.ChangeDutyCycle(50)
-        # motor_theta1.run_motor('minus', 50)
-        # print(motor_theta1.get_angle())
-        # time.sleep(3)
 
-        # # 75% speed for 3 seconds
-        # PWM_THETA1_PLUS.ChangeDutyCycle(75)
-        # motor_theta1.run_motor('plus', 75)
-        # print(motor_theta1.get_angle())
-        # time.sleep(3)
+try: 
+    motor_theta1_controller.move_to(270)
+    time.sleep(1)
+    motor_theta1_controller.move_to(0)
+    # motor_theta1_controller.move_to(90)
+    # motor_theta1_controller.move_to(180)
+    
 
-        # # 100% (max) speed for 3 seconds
-        # PWM_THETA1_PLUS.ChangeDutyCycle(100)
-        # motor_theta1.run_motor('minus', 100)
-        # print(motor_theta1.get_angle())
-        # time.sleep(3)
+except KeyboardInterrupt:
+    print("Shutting down gracefully...")
+    # PWM_THETA1_PLUS.stop()
+    # PWM_THETA1_MINUS.stop()
+    # motor_theta1.stop()
+    GPIO.cleanup()
+    quit()
+    
+except Exception as e:
+    print("An error occurred:", e)
+    # PWM_THETA1_PLUS.stop()
+    # PWM_THETA1_MINUS.stop()
+    GPIO.cleanup()
+    quit()
+
+# motor_theta1.stop() 
+
+# while True:
+#     try: 
+#         # # 20% speed for 3 seconds
+#         # PWM_THETA1_PLUS.start(20)
+#         motor_theta1.run_motor('plus',100)
+#         # print(motor_theta1.get_angle())
+#         print(motor_theta1.measure_speed())
+#         # time.sleep(3)
+
+#         # # 50% speed for 3 seconds
+#         # PWM_THETA1_PLUS.ChangeDutyCycle(50)
+#         # motor_theta1.run_motor('minus', 50)
+#         # print(motor_theta1.get_angle())
+#         # time.sleep(3)
+
+#         # # 75% speed for 3 seconds
+#         # PWM_THETA1_PLUS.ChangeDutyCycle(75)
+#         # motor_theta1.run_motor('plus', 75)
+#         # print(motor_theta1.get_angle())
+#         # time.sleep(3)
+
+#         # # 100% (max) speed for 3 seconds
+#         # PWM_THETA1_PLUS.ChangeDutyCycle(100)
+#         # motor_theta1.run_motor('minus', 100)
+#         # print(motor_theta1.get_angle())
+#         # time.sleep(3)
         
-        # quit()
+#         # quit()
         
-        # motor_theta1.run_motor('plus', 75)
-        # print(motor_theta1.get_angle())
+#         # motor_theta1.run_motor('plus', 75)
+#         # print(motor_theta1.get_angle())
         
-    except KeyboardInterrupt:
-        print("Shutting down gracefully...")
-        # PWM_THETA1_PLUS.stop()
-        # PWM_THETA1_MINUS.stop()
-        motor_theta1.stop()
-        GPIO.cleanup()
-        quit()
+#     except KeyboardInterrupt:
+#         print("Shutting down gracefully...")
+#         # PWM_THETA1_PLUS.stop()
+#         # PWM_THETA1_MINUS.stop()
+#         motor_theta1.stop()
+#         GPIO.cleanup()
+#         quit()
 
-    except Exception as e:
-        print("An error occurred:", e)
-        # PWM_THETA1_PLUS.stop()
-        # PWM_THETA1_MINUS.stop()
-        motor_theta1.stop()
-        GPIO.cleanup()
-        quit()
+#     except Exception as e:
+#         print("An error occurred:", e)
+#         # PWM_THETA1_PLUS.stop()
+#         # PWM_THETA1_MINUS.stop()
+#         motor_theta1.stop()
+#         GPIO.cleanup()
+#         quit()
 
 # motor_theta1 = MotorEncoderCombo(MOTOR_THETA1_PLUS_INPUT_PIN, MOTOR_THETA1_MINUS_INPUT_PIN, MOTOR_THETA1_PLUS_OUTPUT_PIN, MOTOR_THETA1_MINUS_OUTPUT_PIN)
 # motor_theta2 = MotorEncoderCombo(MOTOR_THETA2_PLUS_INPUT_PIN, MOTOR_THETA2_MINUS_INPUT_PIN, MOTOR_THETA2_PLUS_OUTPUT_PIN, MOTOR_THETA2_MINUS_OUTPUT_PIN)

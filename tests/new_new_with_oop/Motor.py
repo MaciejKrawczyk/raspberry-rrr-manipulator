@@ -1,8 +1,7 @@
 import time
 import RPi.GPIO as GPIO
 
-# Assuming PULSES_PER_REVOLUTION is defined globally
-PULSES_PER_REVOLUTION = 1250  # or set to your specific number of pulses per motor revolution
+PULSES_PER_REVOLUTION = 1250
 
 class MotorEncoderCombo:
     def __init__(self, input_plus_pin, input_minus_pin, output_plus_pin, output_minus_pin,
@@ -14,19 +13,16 @@ class MotorEncoderCombo:
         self.pulses_per_revolution = pulses_per_revolution
         self._pulses = 0
         
-        # GPIO setup for the encoder input pins
-        GPIO.setmode(GPIO.BCM)
+        # GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.input_plus_pin, GPIO.IN)
         GPIO.setup(self.input_minus_pin, GPIO.IN)
 
-        # GPIO setup for the motor output pins
         GPIO.setup(self.output_plus_pin, GPIO.OUT)
         GPIO.setup(self.output_minus_pin, GPIO.OUT)
 
-        # Initialize PWM for output pins
-        self.pwm_output_plus = GPIO.PWM(self.output_plus_pin, 100)
-        self.pwm_output_minus = GPIO.PWM(self.output_minus_pin, 100)
-        
+        self.pwm_output_plus = GPIO.PWM(self.output_plus_pin, 1000)
+        self.pwm_output_minus = GPIO.PWM(self.output_minus_pin, 1000)
+
         GPIO.add_event_detect(self.input_plus_pin, GPIO.RISING, callback=self._read_encoder)
 
     def _read_encoder(self, channel):
@@ -45,17 +41,44 @@ class MotorEncoderCombo:
 
     def run_motor(self, direction, percent_of_power):
         if direction == "plus":
-            self.pwm_output_minus.stop()
+            # print("run_motor: plus")
+            self.pwm_output_minus.start(0)
             self.pwm_output_plus.start(percent_of_power)
         elif direction == "minus":
-            self.pwm_output_plus.stop()
+            # print("run_motor: minus")
+            self.pwm_output_plus.start(0)
             self.pwm_output_minus.start(percent_of_power)
         else:
-            self.stop()
+            print("run_motor: invalid direction")
+            raise Exception("Invalid direction")
                 
     def stop(self):
         """Stop the motor by setting both PWM outputs to 0% duty cycle."""
         self.pwm_output_plus.ChangeDutyCycle(0)
         self.pwm_output_minus.ChangeDutyCycle(0)
-        self.pwm_output_plus.stop()
-        self.pwm_output_minus.stop()
+        
+    def measure_speed(self, measure_time=1):
+
+        initial_time = time.time()
+        initial_pulses = self.get_pulses()
+
+        # Wait for the specified measurement time
+        time.sleep(measure_time)
+
+        final_time = time.time()
+        final_pulses = self.get_pulses()
+
+        # Calculate the number of pulses during the measurement interval
+        pulses_count = final_pulses - initial_pulses
+
+        # Calculate the time elapsed in seconds
+        time_elapsed = final_time - initial_time
+
+        # Calculate the number of revolutions (one revolution = pulses_per_revolution)
+        revolutions = pulses_count / self.pulses_per_revolution
+
+        # Convert the time to minutes and calculate RPM
+        time_in_minutes = time_elapsed / 60
+        rpm = revolutions / time_in_minutes
+
+        return rpm
